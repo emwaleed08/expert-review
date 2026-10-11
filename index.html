@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UMD Program Finder Review</title>
+<style>
+@font-face{font-family:"Inter R";src:url(fonts/Inter-Regular.ttf) format("truetype");font-weight:400}
+@font-face{font-family:"Inter R";src:url(fonts/Inter-SemiBold.ttf) format("truetype");font-weight:600}
+@font-face{font-family:"Inter R";src:url(fonts/Inter-Bold.ttf) format("truetype");font-weight:700}
+@font-face{font-family:"Caladea R";src:url(fonts/Caladea-Bold.ttf) format("truetype");font-weight:700}
+
+/* Light, print-first report. One card per heuristic: name → problem → description → current site → proposed wireframe. */
+:root{
+  color-scheme: light;
+  --paper:#fbf8f3;        /* warm page */
+  --card:#ffffff;
+  --ink:#1f2128;
+  --soft:#5e6370;
+  --hair:#e7e2d9;
+  --red:#c8102e;          /* UMD red: problems, links */
+  --redbg:#fbecee;
+  --gold:#f2c230;         /* UMD gold: proposed change */
+  --goldbg:#fff6d9;
+  --wf:#f4f2ee; --wfline:#6b6f78; --wfedge:#d9d5cd;
+  --serif:"Caladea R", Cambria, Georgia, serif;
+  --sans:"Inter R", "Helvetica Neue", Arial, sans-serif;
+}
+*{box-sizing:border-box}
+html{background:var(--paper)}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 var(--sans)}
+a{color:var(--red);text-underline-offset:3px}
+.wrap{max-width:860px;margin:0 auto;padding:48px 20px 72px;display:flex;flex-direction:column;gap:40px}
+h1,h2{font-family:var(--serif);font-weight:700;margin:0;line-height:1.15;text-wrap:balance}
+p{margin:0}
+
+/* cover */
+.cover{display:flex;flex-direction:column;gap:18px}
+.stripe{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--red) 0 50%,var(--gold) 50% 75%,var(--ink) 75%)}
+.cover h1{font-size:2.6rem}
+.kicker{font-size:.8rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+.facts{display:flex;flex-direction:column;gap:6px;background:var(--card);border:1px solid var(--hair);border-radius:14px;padding:18px 22px}
+.facts div{display:grid;grid-template-columns:9.5rem minmax(0,1fr);gap:12px}
+.facts b{font-weight:600}
+@media (max-width:560px){.facts div{grid-template-columns:1fr;gap:0}}
+.key{display:flex;gap:22px;flex-wrap:wrap;font-size:.88rem;color:var(--soft)}
+.key span{display:inline-flex;align-items:center;gap:8px}
+.sw{display:inline-block;width:22px;height:14px;border-radius:3px}
+.sw.r{border:2.5px solid var(--red)}
+.sw.g{border:2px dashed var(--ink);background:var(--goldbg)}
+
+/* flow */
+.flow{display:flex;flex-direction:column;gap:22px}
+.flow h2{font-size:1.7rem}
+.step{margin:0;background:var(--card);border:1px solid var(--hair);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.step img{display:block;width:100%;border-radius:8px;border:1px solid var(--hair)}
+.step figcaption{display:flex;gap:12px;align-items:center;font-size:.98rem}
+.farrow{display:flex;justify-content:center;margin:-8px 0}
+.farrow span{width:34px;height:34px;border-radius:50%;background:var(--red);position:relative}
+.farrow span::after{content:"";position:absolute;left:50%;top:44%;width:10px;height:10px;border-right:3px solid #fff;border-bottom:3px solid #fff;transform:translate(-50%,-50%) rotate(45deg)}
+.num{flex:none;display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;font-weight:700;font-size:.9rem}
+
+/* heuristic card */
+.h{background:var(--card);border:1px solid var(--hair);border-radius:18px;padding:28px 30px 30px;display:flex;flex-direction:column;gap:16px}
+.h .top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.h .idx{font-family:var(--serif);font-size:1.1rem;color:var(--red)}
+.h h2{font-size:1.85rem}
+.prob{background:var(--redbg);border-radius:10px;padding:12px 16px;display:flex;gap:10px;align-items:baseline}
+.prob b{color:var(--red);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;flex:none}
+.prob span{font-weight:600}
+.desc b{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);display:block;margin-bottom:2px}
+.label{font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);display:flex;align-items:center;gap:10px;margin-top:4px}
+.label::after{content:"";flex:1;height:1px;background:var(--hair)}
+.shot{display:block;max-width:100%;border-radius:8px;border:1px solid var(--hair)}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.pair figure{margin:0;display:flex;flex-direction:column;gap:6px}
+.pair figcaption,.cap{font-size:.84rem;color:var(--soft)}
+@media (max-width:600px){.pair{grid-template-columns:1fr}.h{padding:22px 18px}.new > .lab{white-space:normal;position:static;display:inline-block;margin:-26px 0 8px}.opt{grid-template-columns:1fr 1fr;row-gap:6px}.opt .d{grid-column:1/-1}.opt .go{grid-column:1/-1;justify-self:start}}
+
+/* wireframes (greyscale + one gold callout style) */
+.wf{background:var(--wf);border:1.5px solid var(--wfedge);border-radius:12px;padding:18px 20px 20px;color:var(--wfline);font-size:14px;line-height:1.45;display:flex;flex-direction:column;gap:12px}
+.wf .tt{font-family:var(--serif);font-size:20px;color:var(--ink)}
+.wf .hd{background:var(--ink);color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;padding:7px 12px;border-radius:6px}
+.new{position:relative;border:2px dashed var(--ink);background:var(--goldbg);border-radius:10px;padding:14px 12px 12px;margin-top:12px}
+.new > .lab{position:absolute;top:-12px;left:12px;max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis;background:var(--gold);color:var(--ink);font-size:11.5px;font-weight:700;padding:2px 10px;border-radius:999px;white-space:nowrap}
+.row{background:#fff;border:1px solid var(--wfedge);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.row b{color:var(--ink);font-size:15px}
+.sm{font-size:12.5px;color:var(--soft)}
+.u{text-decoration:underline;text-underline-offset:3px;font-size:13px;color:var(--ink)}
+.flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.sp{flex:1}
+.input{flex:1;min-width:170px;background:#fff;border:2px solid var(--wfline);border-radius:8px;padding:9px 12px;color:var(--soft)}
+.btn{background:var(--ink);color:#fff;border-radius:8px;padding:8px 14px;font-weight:700;font-size:13px;white-space:nowrap}
+.btn.o{background:#fff;color:var(--ink);border:1.5px solid var(--ink)}
+.btn.pill{border-radius:999px}
+.pill{background:#fff;border:1.5px solid var(--wfline);border-radius:999px;padding:3px 11px;font-size:12.5px;white-space:nowrap;color:var(--ink)}
+.pill.on{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:600}
+.card{background:#fff;border:1px solid var(--wfedge);border-radius:8px;overflow:hidden}
+.card .ch{padding:10px 12px}
+.card .ch b{color:var(--ink);font-size:15px}
+.opt .r{display:flex;gap:14px;align-items:center}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--soft)}
+.chev{flex:none;display:inline-grid;place-items:center;width:24px;height:24px;vertical-align:middle}
+.chev i{display:block;width:10px;height:10px;border-right:2.5px solid var(--ink);border-bottom:2.5px solid var(--ink);transform:translateY(-2px) rotate(45deg)}
+.chev.open i{transform:translateY(2px) rotate(-135deg)}
+.chev.mini{width:16px;height:16px}
+.chev.mini i{width:6px;height:6px;border-width:1.8px}
+.opt{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1fr) minmax(0,1.1fr) auto;align-items:start;gap:12px;padding:10px 14px;border-top:1px solid var(--wfedge);font-size:13.5px}
+.opt .d b{display:block;color:var(--ink);font-size:14.5px}
+.opt .d span{font-size:12px;color:var(--soft)}
+.opt .kv i{display:block;font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+.opt .kv span{color:var(--ink);font-weight:600}
+.go{align-self:center;color:var(--red);font-size:22px;font-weight:700;line-height:1}
+.opt .kv small{display:block;font-size:12px;color:var(--soft)}
+.opt .kv i{white-space:nowrap}
+.links{margin-top:6px;display:flex;gap:8px;align-items:center;font-size:13px;flex-wrap:wrap}
+.links span{color:var(--red);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.links .sep{color:var(--wfedge);text-decoration:none;font-weight:400}
+.opt .deg{font-weight:700;color:var(--ink)}
+.opt .fmt{justify-self:start;background:var(--wf);border-radius:999px;padding:1px 9px;font-size:12px;color:var(--ink);white-space:nowrap}
+.opt .dl{font-size:12.5px;color:var(--soft);white-space:nowrap}
+.tg{position:relative}
+.ht.c{position:absolute;top:-9px;right:-9px;z-index:2;box-shadow:0 0 0 2px #fff}
+.acc{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.page .tt{font-family:var(--serif);color:var(--ink)}
+.more{font-weight:600;color:var(--ink);font-size:13px;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.page{background:#fff;border:1.5px solid var(--wfedge);border-radius:12px;overflow:hidden;color:var(--wfline);font-size:13.5px;line-height:1.45}
+.pbar{display:flex;gap:16px;flex-wrap:wrap;background:var(--ink);color:#fff;font-size:11px;font-weight:700;letter-spacing:.06em;padding:9px 14px;border-top:5px solid var(--red)}
+.pbody{padding:16px 18px 20px;display:flex;flex-direction:column;gap:12px;background:var(--wf)}
+.pgrid{display:grid;grid-template-columns:210px minmax(0,1fr);gap:18px;margin-top:4px}
+.side{background:#fff;border:1px solid var(--wfedge);border-radius:8px;padding:12px}
+@media (max-width:640px){.pgrid{grid-template-columns:1fr}}
+.cb.on{background:var(--ink);border-color:var(--ink)}
+.ht{display:inline-block;font-style:normal;font-size:10.5px;font-weight:700;background:var(--gold);color:var(--ink);border-radius:999px;padding:1px 7px;vertical-align:middle;letter-spacing:.02em}
+.homebar{background:var(--ink);color:#fff;border-radius:12px;padding:14px 18px;display:flex;flex-direction:column;gap:8px}
+.homebar b{font-family:var(--serif);font-size:20px;color:var(--gold)}
+.jump{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--ink);padding-left:22px}
+.jump span{font-size:20px;line-height:1}
+.legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 18px;font-size:13px}
+.legend span{display:flex;gap:8px;align-items:center}
+@media (max-width:560px){.legend{grid-template-columns:1fr}}
+.apply{font-weight:700;color:var(--red);font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.select{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--wfline);border-radius:8px;padding:5px 10px;font-size:13px;color:var(--ink);font-weight:600}
+.dd{position:relative;display:inline-block}
+.menu{position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1.5px solid var(--wfline);border-radius:8px;box-shadow:0 6px 16px rgba(0,0,0,.08);font-size:13px;min-width:100%;z-index:1}
+.menu div{padding:6px 10px;white-space:nowrap}
+.menu div:first-child{background:var(--wf);font-weight:600}
+.filt{display:flex;flex-direction:column;gap:4px;font-size:13.5px}
+.filt h5{margin:10px 0 2px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
+.filt h5:first-child{margin-top:0}
+.filt label{display:flex;gap:8px;align-items:center;color:var(--ink)}
+.cb{width:12px;height:12px;border:1.5px solid var(--wfline);border-radius:3px;background:#fff;flex:none}
+.hero{background:var(--ink);color:#fff;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:6px}
+.hero b{font-family:var(--serif);font-size:20px;color:var(--gold)}
+.note{font-size:12px;color:var(--soft)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:600px){.two{grid-template-columns:1fr}}
+.mini{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--soft)}
+
+@media print{
+  @page{size:letter;margin:.5in}
+  html,body{background:#fff}
+  body{font-size:13.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .wrap{max-width:none;padding:0;gap:0}
+  .cover,.flowpage,.h{break-after:page}
+  .h:last-child{break-after:auto}
+  .h{border:none;padding:0;border-radius:0}
+  .shot{max-height:2.75in;width:auto}
+  .opt{padding:6px 12px;gap:8px}
+  .shot.short{max-height:1.35in;width:auto!important;height:auto;align-self:flex-start;object-fit:contain}
+  .h{gap:11px}
+  .h h2{font-size:1.6rem}
+  .wf{padding:12px 16px 14px;gap:9px}
+  .new{padding:12px 10px 10px}
+  .flowpage{display:flex;flex-direction:column;gap:14px}
+  .step{break-inside:avoid;padding:10px}
+  .step img{height:3.15in;width:auto;max-width:100%}
+  .farrow{margin:-4px 0}
+  .wf{break-inside:avoid}
+  .full .page{font-size:12px}
+  .full{gap:8px;zoom:.86}
+  .full .homebar{padding:10px 14px;gap:5px}
+  .full .pbody{padding:12px 14px 14px;gap:9px}
+  .full .legend{font-size:11.5px;gap:3px 14px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- COVER + STEPS 1–2 -->
+<section class="cover flowpage">
+  <div class="stripe"></div>
+  <span class="kicker">Expert review · Nielsen's 10 usability heuristics</span>
+  <h1>Exploring Graduate Programs at UMD</h1>
+  <div class="facts">
+    <div><b>Website</b><span><a href="https://gradschool.umd.edu/">gradschool.umd.edu</a></span></div>
+    <div><b>Users</b><span>Prospective graduate applicants</span></div>
+    <div><b>Task</b><span>Find and compare graduate programs</span></div>
+    <div><b>Page evaluated</b><span><a href="https://academiccatalog.umd.edu/filters/">academiccatalog.umd.edu/filters/</a></span></div>
+  </div>
+  <div class="facts">
+    <div><b>Heuristics covered</b><span>1. Aesthetic and minimalist design<br>2. Flexibility and efficiency of use<br>3. Match between system and the real world<br>4. Visibility of system status<br>5. Consistency and standards<br>6. Recognition rather than recall<br>7. Help and documentation</span></div>
+  </div>
+  <div class="key">
+    <span><i class="sw r"></i>Red box: what to click, or the problem</span>
+    <span><i class="sw g"></i>Dashed yellow box: the proposed change</span>
+  </div>
+</section>
+
+<section class="flow flowpage">
+  <h2>The flow</h2>
+  <figure class="step"><img src="img/flow1.png" alt="Graduate School home page"><figcaption><span class="num">1</span><span>On the Graduate School home page, open the <b>Admissions</b> menu.</span></figcaption></figure>
+  <div class="farrow" aria-hidden="true"><span></span></div>
+  <figure class="step"><img src="img/flow2.png" alt="Admissions menu open"><figcaption><span class="num">2</span><span>In the menu, click <b>All Graduate Programs</b>.</span></figcaption></figure>
+</section>
+
+<section class="flow flowpage">
+  <div class="farrow" aria-hidden="true"><span></span></div>
+  <figure class="step"><img src="img/flow3.png" alt="All Graduate Programs page"><figcaption><span class="num">3</span><span>On the All Graduate Programs page, click the <b>Academic Catalog</b> link.</span></figcaption></figure>
+  <div class="farrow" aria-hidden="true"><span></span></div>
+  <figure class="step"><img src="img/flow4.png" alt="Academic Catalog program list"><figcaption><span class="num">4</span><span>The Academic Catalog program list opens. This is the page evaluated below.</span></figcaption></figure>
+</section>
+
+<!-- 1 -->
+<section class="h">
+  <div class="top"><span class="idx">Heuristic 1</span><h2>Aesthetic and minimalist design</h2></div>
+  <p class="prob"><b>Problem</b><span>Too many boxes and colored labels.</span></p>
+  <p class="desc"><b>Description</b>The page feels cluttered. Red, yellow, black and grey tiles look like categories but mean nothing, and the program names are small. This makes it hard to spot important information and scan programs.</p>
+  <div class="label">Current site</div>
+  <img class="shot" src="img/aesthetic.png" alt="Grid of colored program tiles">
+  <div class="label">Proposed wireframe</div>
+  <div class="wf">
+    <div class="hd">UNIVERSITY OF MARYLAND · ACADEMIC CATALOG</div>
+    <div class="tt">Graduate Programs</div>
+    <div class="new"><span class="lab">Simple list instead of colored tiles</span>
+      <div class="flex" style="flex-direction:column;align-items:stretch;gap:8px">
+        <div class="row"><div><b>Accounting</b><div class="sm">Robert H. Smith School of Business</div></div><span class="u">Program details</span></div>
+        <div class="row"><div><b>Aerospace Engineering</b><div class="sm">A. James Clark School of Engineering</div></div><span class="u">Program details</span></div>
+        <div class="row"><div><b>African American Studies</b><div class="sm">College of Arts and Humanities</div></div><span class="u">Program details</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="h">
+  <div class="top"><span class="idx">Heuristic 2</span><h2>Flexibility and efficiency of use</h2></div>
+  <p class="prob"><b>Problem</b><span>Too many navigation steps and a long program list without clear grouping.</span></p>
+  <p class="desc"><b>Description</b>Users must click through several screens to reach the program list. Once there, 230+ programs appear in one long alphabetical grid. The "Narrow your results" search box is small, pale and tucked into the sidebar, so it is easy to miss. A direct "Explore Graduate Programs" link and grouping programs by field of study would make this easier.</p>
+  <div class="label">Current site</div>
+  <img class="shot" src="img/flex.png" alt="Catalog page with small search box and long grid">
+  <div class="label">Proposed wireframe</div>
+  <div class="wf">
+    <div class="hero"><b>Welcome GradTerps!</b>
+      <div class="new" style="align-self:flex-start;background:transparent;border-color:#fff"><span class="lab">Direct link from the home page</span><span class="btn o">Explore Graduate Programs</span></div>
+    </div>
+    <div class="tt">Graduate Programs</div>
+    <div class="new"><span class="lab">Large search bar + browse by field of study</span>
+      <div class="flex" style="flex-direction:column;align-items:stretch;gap:10px">
+        <div class="flex"><div class="input">Search programs by name or interest</div><span class="btn">Search</span></div>
+        <div class="flex"><span class="sm">Browse by field:</span><span class="pill">Business</span><span class="pill">Engineering</span><span class="pill">Health</span><span class="pill">Education</span><span class="pill">Arts &amp; Humanities</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="h">
+  <div class="top"><span class="idx">Heuristic 3</span><h2>Match between system and the real world</h2></div>
+  <p class="prob"><b>Problem</b><span>Similar programs are only told apart by internal codes.</span></p>
+  <p class="desc"><b>Description</b>"Aerospace Engineering" appears five times, with codes such as MEAE, Z179 and PMAE as the only difference. Applicants don't know these codes, so they can't tell which is a master's, a doctorate or an online option. The codes should move to each program's Details page, because applicants comparing programs on this page don't need them.</p>
+  <div class="label">Current site</div>
+  <img class="shot short" src="img/match.png" alt="Five Aerospace Engineering tiles">
+  <div class="label">Proposed wireframe</div>
+  <div class="wf">
+    <div class="tt">Graduate Programs</div>
+    <div class="new"><span class="lab">One heading per program; open it to see each degree, format and deadline, with an arrow to apply</span>
+      <div class="flex" style="flex-direction:column;align-items:stretch;gap:8px">
+        <div class="card">
+          <div class="ch acc"><div><b>Aerospace Engineering</b><div class="sm">A. James Clark School of Engineering</div><div class="links"><span>Program details</span><span class="sep">|</span><span>Contact the department</span></div></div><span class="chev open"><i></i></span></div>
+          <div class="opt"><div class="d"><b>M.S.</b></div><div class="kv"><i>Format</i><span>In person</span></div><div class="kv"><i>Deadline</i><span>[date]</span><small>for Fall 2027</small></div><span class="go" title="Apply to this degree">→</span></div>
+          <div class="opt"><div class="d"><b>M.S.</b></div><div class="kv"><i>Format</i><span>Online</span></div><div class="kv"><i>Deadline</i><span>[date]</span><small>for Fall 2027</small></div><span class="go" title="Apply to this degree">→</span></div>
+          <div class="opt"><div class="d"><b>Ph.D.</b></div><div class="kv"><i>Format</i><span>In person</span></div><div class="kv"><i>Deadline</i><span>[date]</span><small>for Fall 2027</small></div><span class="go" title="Apply to this degree">→</span></div>
+        </div>
+        <div class="card"><div class="ch acc"><div><b>Accounting</b><div class="sm">Robert H. Smith School of Business</div></div><span class="chev"><i></i></span></div></div>
+      </div>
+    </div>
+    <p class="note"><span class="chev mini"><i></i></span> open the program &nbsp;·&nbsp; <span class="chev open mini"><i></i></span> close it &nbsp;·&nbsp; <b style="color:var(--red)">→</b> apply to that degree. "Program details" is one page for the whole program; each degree has its own application, so the → sits on each row. Catalog codes (like ENAE) move to each program's Details page. Brackets are placeholders.</p>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="h">
+  <div class="top"><span class="idx">Heuristic 4</span><h2>Visibility of system status</h2></div>
+  <p class="prob"><b>Problem</b><span>Weak feedback after choosing a filter.</span></p>
+  <p class="desc"><b>Description</b>After selecting "Master," the list of tiles gets shorter, but nothing tells the user how many programs now match or which filters are on. Because the tiles all look alike, the change is easy to miss. Resetting uses a small unlabeled icon.</p>
+  <div class="label">Current site</div>
+  <img class="shot" src="img/visibility.png" alt="Catalog with the Master filter selected">
+  <div class="label">Proposed wireframe</div>
+  <div class="wf">
+    <div class="tt">Graduate Programs</div>
+    <div class="new"><span class="lab">Result count, active filter and clear option</span>
+      <div class="flex"><b style="color:var(--ink)">Showing [N] programs</b><span class="pill on">Master's ✕</span><span class="sp"></span><span class="u">Clear all filters</span></div>
+    </div>
+    <div class="flex" style="flex-direction:column;align-items:stretch;gap:8px">
+      <div class="card"><div class="ch acc"><div><b>Accounting</b><div class="sm">Robert H. Smith School of Business</div></div><span class="chev"><i></i></span></div></div>
+      <div class="card"><div class="ch acc"><div><b>Aerospace Engineering</b><div class="sm">A. James Clark School of Engineering</div></div><span class="chev"><i></i></span></div></div>
+    </div>
+    <p class="note">[N] is a placeholder for the live result count.</p>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="h">
+  <div class="top"><span class="idx">Heuristic 5</span><h2>Consistency and standards</h2></div>
+  <p class="prob"><b>Problem</b><span>Filter options are grouped inconsistently.</span></p>
+  <p class="desc"><b>Description</b>"Master of Public Health" sits next to "Master," even though it is a kind of master's degree. The "Other" group mixes unrelated things: program type (Research), location (Off-site) and calendar (12-Week-Term).</p>
+  <div class="label">Current site</div>
+  <img class="shot" style="width:72%" src="img/consistency.png" alt="Degrees / Level and Other filter groups">
+  <div class="label">Proposed wireframe</div>
+  <div class="wf">
+    <div class="new" style="max-width:480px"><span class="lab">Clear groups: degree, format, focus (tick as many as you like)</span>
+      <div class="filt">
+        <h5>Degree type</h5>
+        <label><i class="cb"></i>Master's (M.S., M.A., MPH, MBA…)</label>
+        <label><i class="cb"></i>Doctoral (Ph.D., Ed.D.…)</label>
+        <label><i class="cb"></i>Graduate certificate</label>
+        <h5>Format</h5>
+        <label><i class="cb"></i>In person</label>
+        <label><i class="cb"></i>Fully online</label>
+        <label><i class="cb"></i>Off-site location</label>
+        <h5>Program focus</h5>
+        <label><i class="cb"></i>Research</label>
+        <label><i class="cb"></i>Professional</label>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="h">
+  <div class="top"><span class="idx">Heuristic 6</span><h2>Recognition rather than recall</h2></div>
+  <p class="prob"><b>Problem</b><span>Tiles show only a program name and a code.</span></p>
+  <p class="desc"><b>Description</b>To learn whether a program is a master's or doctorate, online or in person, or when it is due, users must open each tile, then go to the separate Deadlines and Requirements pages and remember what they read. To apply, they have to go back to the Graduate School site and find the application on their own.</p>
+  <div class="label">Current site</div>
+  <img class="shot" src="img/recognition.png" alt="Program tiles showing only a name and code">
+  <div class="label">Proposed wireframe</div>
+  <div class="wf">
+    <div class="tt">Graduate Programs</div>
+    <div class="new"><span class="lab">Degree, format and deadline on the list, with an arrow to apply</span>
+      <div class="card">
+        <div class="ch"><b>Accounting</b><div class="sm">Robert H. Smith School of Business</div><div class="links"><span>Program details</span><span class="sep">|</span><span>Contact the department</span></div></div>
+        <div class="opt"><div class="d"><b>M.S.</b></div><div class="kv"><i>Format</i><span>In person</span></div><div class="kv"><i>Deadline</i><span>[date]</span><small>for Fall 2027</small></div><span class="go" title="Apply to this degree">→</span></div>
+      </div>
+    </div>
+    <p class="note">Brackets are placeholders for verified catalog data.</p>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="h">
+  <div class="top"><span class="idx">Heuristic 7</span><h2>Help and documentation</h2></div>
+  <p class="prob"><b>Problem</b><span>Help disappears on the program list.</span></p>
+  <p class="desc"><b>Description</b>The Graduate School pages offer a Chat button and point applicants to the academic department. The Academic Catalog has neither, even though this is where applicants are choosing between confusing options.</p>
+  <div class="label">Current site</div>
+  <div class="pair">
+    <figure><img class="shot" src="img/help_grad.png" alt="Graduate School page with Chat button"><figcaption>Graduate School page: Chat button</figcaption></figure>
+    <figure><img class="shot" src="img/help_cat.png" alt="Academic Catalog with no chat"><figcaption>Academic Catalog: no Chat or help</figcaption></figure>
+  </div>
+  <div class="label">Proposed wireframe</div>
+  <div class="wf">
+    <div class="tt">Graduate Programs</div>
+    <div class="card"><div class="ch acc"><div><b>Aerospace Engineering</b><div class="sm">A. James Clark School of Engineering</div></div><span class="chev"><i></i></span></div></div>
+    <div class="card"><div class="ch acc"><div><b>African American Studies</b><div class="sm">College of Arts and Humanities</div></div><span class="chev"><i></i></span></div></div>
+    <div class="new" style="align-self:flex-end;max-width:100%"><span class="lab">Chat stays available</span><div class="flex"><span class="sm">Need help choosing?</span><span class="btn pill">Chat</span></div></div>
+  </div>
+</section>
+
+<!-- FULL PAGE -->
+<section class="h full">
+  <div class="top"><span class="idx">Summary</span><h2>Full redesigned program list</h2></div>
+  <p class="desc">All seven fixes together on one page. The gold tag on each part shows which heuristic it fixes.</p>
+  <div class="homebar tg"><i class="ht c">H2</i>
+    <span class="mini" style="color:#cfd2d8">Graduate School home page</span>
+    <b>Welcome GradTerps!</b>
+    <div class="flex"><span class="btn o">Explore Graduate Programs</span><span class="btn o" style="opacity:.7">Apply Now</span></div>
+  </div>
+  <div class="jump"><span>↓</span> One click takes the applicant straight to the program list</div>
+  <div class="page">
+    <div class="pbar"><span>UNIVERSITY OF MARYLAND · THE GRADUATE SCHOOL</span><span class="sp"></span><span>Admissions</span><span>Academics</span><span>Funding</span></div>
+    <div class="pbody">
+      <div class="sm">Graduate School › <b style="color:var(--ink)">Graduate Programs</b></div>
+      <div class="tt" style="font-size:26px">Graduate Programs</div>
+      <div class="tg" style="display:flex;flex-direction:column;gap:10px"><i class="ht c">H2</i><div class="flex"><div class="input">Search programs by name or interest</div><span class="btn">Search</span></div>
+      <div class="flex"><span class="sm">Browse by field:</span><span class="pill">Business</span><span class="pill">Engineering</span><span class="pill">Health</span><span class="pill">Education</span><span class="pill">Arts &amp; Humanities</span></div></div>
+      <div class="pgrid">
+        <div class="side tg"><i class="ht c">H5</i>
+          <div class="filt">
+            <h5>Degree type</h5>
+            <label><i class="cb on"></i>Master's (M.S., M.A., MPH, MBA…)</label>
+            <label><i class="cb"></i>Doctoral (Ph.D., Ed.D.…)</label>
+            <label><i class="cb"></i>Graduate certificate</label>
+            <h5>Format</h5>
+            <label><i class="cb"></i>In person</label>
+            <label><i class="cb"></i>Fully online</label>
+            <label><i class="cb"></i>Off-site location</label>
+            <h5>Program focus</h5>
+            <label><i class="cb"></i>Research</label>
+            <label><i class="cb"></i>Professional</label>
+            <h5>College / school</h5>
+            <label><i class="cb"></i>Business</label>
+            <label><i class="cb"></i>Engineering</label>
+            <span class="sm">+ 10 more</span>
+          </div>
+        </div>
+        <div class="flex" style="flex-direction:column;align-items:stretch;gap:10px;min-width:0">
+          <div class="flex tg" style="padding:4px 34px 4px 0"><i class="ht c" style="top:0">H4</i><b style="color:var(--ink)">Showing [N] programs</b><span class="pill on">Master's ✕</span><span class="u">Clear all filters</span><span class="sp"></span><span class="pill">Sort: A–Z ▾</span></div>
+          <div class="card tg" style="overflow:visible"><i class="ht c">H3</i>
+            <div class="ch acc"><div><b>Aerospace Engineering</b><div class="sm">A. James Clark School of Engineering</div><div class="links"><span>Program details</span><span class="sep">|</span><span>Contact the department</span></div></div><span class="chev open"><i></i></span></div>
+            <div class="tg"><div class="opt"><div class="d"><b>M.S.</b></div><div class="kv"><i>Format</i><span>In person</span></div><div class="kv"><i>Deadline</i><span>[date]</span><small>for Fall 2027</small></div><span class="go" title="Apply to this degree">→</span></div><i class="ht c" style="top:-8px;left:150px;right:auto">H6</i></div>
+            <div class="opt"><div class="d"><b>M.S.</b></div><div class="kv"><i>Format</i><span>Online</span></div><div class="kv"><i>Deadline</i><span>[date]</span><small>for Fall 2027</small></div><span class="go" title="Apply to this degree">→</span></div>
+          </div>
+          <div class="card tg" style="overflow:visible"><i class="ht c">H1</i><div class="ch acc"><div><b>Accounting</b><div class="sm">Robert H. Smith School of Business</div></div><span class="chev"><i></i></span></div></div>
+          <div class="card"><div class="ch acc"><div><b>Applied Economics</b><div class="sm">College of Behavioral and Social Sciences</div></div><span class="chev"><i></i></span></div></div>
+          <div class="flex" style="justify-content:flex-end;margin-top:6px"><span class="flex tg" style="padding:2px 0"><i class="ht c" style="top:-14px">H7</i><span class="sm">Need help choosing?</span><span class="btn pill">Chat</span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="legend">
+    <span><i class="ht">H1</i> Simple list, no colored tiles</span>
+    <span><i class="ht">H2</i> Home page shortcut, big search, browse by field</span>
+    <span><i class="ht">H3</i> One heading per program; opens to show each degree with an arrow to apply</span>
+    <span><i class="ht">H4</i> Result count, active filter, clear all</span>
+    <span><i class="ht">H5</i> Filters sorted into clear groups (degree, format, focus)</span>
+    <span><i class="ht">H6</i> Degree, format and Fall 2027 deadline on the list</span>
+    <span><i class="ht">H7</i> Chat available on the catalog</span>
+  </div>
+  <p class="note">Brackets are placeholders.</p>
+</section>
+
+</div>
+</body>
+</html>
